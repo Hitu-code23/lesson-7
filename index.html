@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lesson 7: Analytics and reporting | التحليلات وكتابة التقارير</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Readex+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#ECEEE8; --surface:#FFFFFF; --ink:#15203B; --muted:#5A6377; --line:#D3D7CE;
+  --cobalt:#2F43EB; --cobalt-soft:#E1E5FB; --saffron:#F5A300; --saffron-soft:#FFF1D1;
+  --good:#0F7E68; --good-soft:#DDF3EC; --bad:#B8392F; --bad-soft:#F8E1DE; --code:#15203B; --code-ink:#E9ECF7;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0E1322; --surface:#171E33; --ink:#ECEFF7; --muted:#9BA4BA; --line:#283152;
+    --cobalt:#7F8DFF; --cobalt-soft:#232C52; --saffron:#FFC14A; --saffron-soft:#3A3020;
+    --good:#45CBA6; --good-soft:#15362E; --bad:#FF8075; --bad-soft:#3D2223; --code:#0A0F1C; --code-ink:#DDE2F2;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0E1322; --surface:#171E33; --ink:#ECEFF7; --muted:#9BA4BA; --line:#283152;
+  --cobalt:#7F8DFF; --cobalt-soft:#232C52; --saffron:#FFC14A; --saffron-soft:#3A3020;
+  --good:#45CBA6; --good-soft:#15362E; --bad:#FF8075; --bad-soft:#3D2223; --code:#0A0F1C; --code-ink:#DDE2F2;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;height:100%;background:var(--paper);color:var(--ink);
+  font-family:'Bricolage Grotesque',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.en,.ar{unicode-bidi:isolate}
+.ar{font-family:'Readex Pro','Segoe UI',Tahoma,'Geeza Pro',sans-serif;direction:rtl;text-align:right;line-height:1.75}
+html[dir=rtl] .en{direction:ltr;text-align:left}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--saffron);outline-offset:3px;border-radius:6px}
+
+/* language modes */
+body.mode-en .ar, body.mode-ar .en{display:none !important}
+.bi{display:grid;grid-template-columns:1fr 1fr;gap:0 40px}
+.bi>*{margin:0}
+body.mode-en .bi, body.mode-ar .bi, .stack .bi, .bi.stack{grid-template-columns:1fr}
+.stack .bi>.ar, .bi.stack>.ar{margin-top:4px}
+.ui .ar{margin-inline-start:.5em}
+body.mode-en .ui .ar, body.mode-ar .ui .ar{margin:0}
+
+.app{height:100%;display:grid;grid-template-rows:auto 1fr auto;max-width:1120px;margin:0 auto}
+header{padding:16px 24px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px}
+.crumb{flex:1 1 260px;min-width:0}
+.crumb .num{font-weight:600;color:var(--cobalt);font-size:14px}
+.crumb .sep{display:inline-block;margin-left:.7em;padding-left:.7em;border-left:1.5px solid var(--line)}
+body.mode-ar .crumb .sep{margin:0;padding:0;border:0}
+.crumb .ttl{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumb .ttl .ar{font-size:14px}
+.lang{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.lang button{border:0;background:transparent;padding:6px 12px;border-radius:999px;cursor:pointer;font-size:14px}
+.lang button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.lang .arlbl{font-family:'Readex Pro',sans-serif}
+.progress{flex-basis:100%;display:flex;gap:4px}
+.progress i{flex:1;height:4px;border-radius:4px;background:var(--line);transition:background .3s}
+.progress i.done{background:var(--cobalt)}
+.progress i.now{background:var(--saffron)}
+
+main{overflow-y:auto;overflow-x:hidden;padding:12px 24px 24px;-webkit-overflow-scrolling:touch}
+.slide{max-width:1000px;margin:0 auto;padding:12px 0 8px}
+.in{opacity:0;transform:translateY(14px);animation:rise .55s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--i,0)*80ms)}
+.slide.back .in{transform:translateY(-10px)}
+@keyframes rise{to{opacity:1;transform:none}}
+[data-b]{transition:opacity .45s ease, transform .45s cubic-bezier(.2,.7,.2,1)}
+[data-b]:not(.shown){opacity:.0;transform:translateY(10px);pointer-events:none}
+
+.kicker{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--muted);margin-bottom:10px}
+.kicker .dot{width:9px;height:9px;border-radius:50%;background:var(--saffron)}
+h1,h2{margin:0;font-weight:800;letter-spacing:-.02em;line-height:1.08}
+h2{font-size:clamp(28px,4.4vw,44px)}
+h2.ar{font-weight:600;letter-spacing:0;line-height:1.4;font-size:clamp(24px,3.6vw,36px)}
+.lead{font-size:clamp(17px,2vw,20px);color:var(--muted);margin-top:14px}
+.lead .ar,.bi>.ar.lead{font-size:.95em}
+.gap{height:22px}
+
+/* cover */
+.cover{display:grid;grid-template-columns:auto 1fr;gap:12px 40px;align-items:end;min-height:58vh}
+.bignum{width:fit-content;font-size:clamp(150px,26vw,300px);font-weight:800;line-height:.78;color:var(--cobalt);letter-spacing:-.06em;position:relative}
+.bignum::after{content:"";position:absolute;width:.16em;height:.16em;border-radius:50%;background:var(--saffron);right:-.12em;bottom:.04em}
+.cover h1{font-size:clamp(34px,5.6vw,62px)}
+.cover h1.ar{font-weight:600;font-size:clamp(28px,4.4vw,46px);line-height:1.35;margin-top:6px}
+.cover .bi{grid-template-columns:1fr}
+.outcomes{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+.oc{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.oc .tick{color:var(--good);font-weight:800;margin-bottom:6px}
+.start{grid-column:1/-1;justify-self:start;margin-top:8px}
+
+/* concept */
+.concept{display:grid;grid-template-columns:1fr 200px;gap:30px;align-items:center}
+.emoji{font-size:clamp(84px,14vw,150px);text-align:center;line-height:1;filter:saturate(1.05)}
+.para{margin-top:14px}
+
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:24px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px}
+.card .ic{font-size:30px;margin-bottom:8px}
+.card .h{font-weight:700}
+.card .ar.h{font-weight:600}
+.card .d{color:var(--muted);font-size:15px;margin-top:6px}
+
+/* compare */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
+.side{border-radius:20px;padding:20px 22px;border:1.5px solid}
+.side.bad{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 40%,transparent)}
+.side.good{background:var(--good-soft);border-color:color-mix(in srgb,var(--good) 45%,transparent)}
+.tag{font-weight:700;font-size:14px;margin-bottom:10px;display:flex;gap:8px;align-items:center}
+.bad .tag{color:var(--bad)} .good .tag{color:var(--good)}
+.side .txt{font-size:18px}
+
+/* example */
+.ex{margin-top:22px;background:var(--cobalt-soft);border-radius:22px;padding:22px 24px;border-inline-start:5px solid var(--cobalt)}
+.ex .row{padding:9px 0;border-bottom:1px dashed color-mix(in srgb,var(--cobalt) 30%,transparent)}
+.ex .row:last-child{border-bottom:0}
+
+/* flow */
+.flow{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:12px;margin-top:30px}
+.flow::before{content:"";position:absolute;left:4%;right:4%;top:22px;height:3px;background:var(--line);border-radius:3px}
+.flow::after{content:"";position:absolute;left:4%;top:22px;height:3px;background:var(--cobalt);border-radius:3px;width:calc(92% * var(--p,0));transition:width .6s cubic-bezier(.2,.7,.2,1)}
+.node{position:relative;z-index:1}
+.node .pin{width:46px;height:46px;border-radius:50%;background:var(--surface);border:3px solid var(--cobalt);display:grid;place-items:center;font-weight:800;color:var(--cobalt);margin-bottom:12px}
+.node.shown .pin{background:var(--cobalt);color:#fff}
+.node .box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}
+.node .h{font-weight:700}
+.node .d{font-size:14.5px;color:var(--muted);margin-top:6px}
+.node .s{font-size:14px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)}
+.node .s b{color:var(--cobalt)}
+
+/* steps */
+.steps{list-style:none;margin:24px 0 0;padding:0;display:grid;gap:10px}
+.steps li{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+.steps .n{width:36px;height:36px;border-radius:12px;background:var(--saffron);color:#1a1300;display:grid;place-items:center;font-weight:800}
+
+/* quiz */
+.opts{display:grid;gap:10px;margin-top:22px}
+.opt{text-align:start;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:14px 18px;cursor:pointer;transition:border-color .2s, background .2s, transform .15s}
+.opt:hover{border-color:var(--cobalt)}
+.opt:active{transform:scale(.99)}
+.opt.right{background:var(--good-soft);border-color:var(--good)}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.why{margin-top:16px;padding:16px 18px;border-radius:16px;background:var(--saffron-soft);display:none}
+.why.on{display:block;animation:rise .4s forwards}
+.why .tag{color:var(--ink)}
+
+/* task */
+.task{margin-top:22px;background:var(--good-soft);border-radius:22px;padding:22px 24px}
+.task ul{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.task li{padding:10px 14px;background:var(--surface);border-radius:12px}
+.timer{display:flex;align-items:center;gap:16px;margin-top:18px;flex-wrap:wrap}
+.clock{font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;min-width:110px}
+.clock.done{color:var(--good);animation:pulse 1s 3}
+@keyframes pulse{50%{transform:scale(1.08)}}
+
+/* prompt */
+.prompt{margin-top:22px;background:var(--code);color:var(--code-ink);border-radius:20px;padding:20px 22px}
+.prompt .bi{gap:16px 28px}
+.prompt p{font-size:15.5px;line-height:1.65}
+.prompt .ar{line-height:1.9}
+.prompt .bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.prompt .btn{background:var(--code-ink);color:var(--code)}
+.note{margin-top:14px;color:var(--muted);font-size:15px}
+
+/* homework */
+.hw{list-style:none;padding:0;margin:22px 0 0;display:grid;gap:10px}
+.hw label{display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;cursor:pointer}
+.hw input{width:22px;height:22px;accent-color:var(--good);margin-top:3px}
+.hw input:checked + .bi{opacity:.55;text-decoration:line-through}
+
+/* end */
+.end{text-align:center;min-height:52vh;display:grid;place-items:center;align-content:center;gap:16px}
+.end .bi{grid-template-columns:1fr;text-align:center}
+.end .bi .ar{text-align:center}
+.check svg{width:120px;height:120px}
+.check circle{stroke:var(--good);stroke-width:6;fill:none;stroke-dasharray:340;stroke-dashoffset:340;animation:draw .9s .1s forwards}
+.check path{stroke:var(--good);stroke-width:8;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:90;stroke-dashoffset:90;animation:draw .5s .8s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+.btn{border:0;border-radius:999px;padding:12px 22px;font-weight:700;cursor:pointer;background:var(--ink);color:var(--paper);display:inline-flex;align-items:center;gap:6px}
+.btn.alt{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.35;cursor:default}
+
+footer{padding:12px 24px 16px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;border-top:1px solid var(--line);background:var(--paper)}
+footer .count{font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px;text-align:center}
+footer #prev{justify-self:start} footer #next{justify-self:end}
+#next{background:var(--cobalt);color:#fff;padding:14px 26px}
+#next.more{background:var(--saffron);color:#1a1300}
+
+@media (max-width:760px){
+  body{font-size:16px}
+  header{padding:12px 16px 8px}
+  main{padding:8px 16px 20px}
+  footer{padding:10px 16px 12px}
+  .bi{grid-template-columns:1fr}
+  .bi>.ar{margin-top:6px}
+  .cover{grid-template-columns:1fr;min-height:0}
+  .bignum{font-size:140px}
+  .outcomes{grid-template-columns:1fr}
+  .concept{grid-template-columns:1fr}
+  .emoji{order:-1;text-align:start;font-size:72px}
+  .cmp{grid-template-columns:1fr}
+  .flow{grid-auto-flow:row;grid-auto-columns:auto;gap:12px;padding-inline-start:0}
+  .flow::before{left:22px;right:auto;top:20px;bottom:20px;width:3px;height:auto}
+  .flow::after{left:22px;top:20px;width:3px;height:calc((100% - 40px) * var(--p,0));transition:height .6s}
+  .node{display:grid;grid-template-columns:46px 1fr;gap:12px;align-items:start}
+  .node .pin{margin:0}
+  html[dir=rtl] .flow::before, html[dir=rtl] .flow::after{left:auto;right:22px}
+  #next,.btn{padding:12px 18px;white-space:nowrap}
+  .crumb .sep{display:inline-block;margin-left:.7em;padding-left:.7em;border-left:1.5px solid var(--line)}
+body.mode-ar .crumb .sep{margin:0;padding:0;border:0}
+.crumb .ttl{white-space:normal}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-delay:0ms !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body class="mode-both">
+<div class="app">
+  <header>
+    <div class="crumb">
+      <div class="num"><span class="en" id="lnum"></span></div>
+      <div class="ttl"><span class="en" id="ten"></span> <span class="ar" id="tar"></span></div>
+    </div>
+    <div class="lang" role="group" aria-label="Language">
+      <button data-m="en">English</button>
+      <button data-m="both">Both · <span class="arlbl">الاثنين</span></button>
+      <button data-m="ar" class="arlbl">عربي</button>
+    </div>
+    <div class="progress" id="prog" aria-hidden="true"></div>
+  </header>
+  <main id="stage" aria-live="polite"></main>
+  <footer>
+    <button class="btn alt ui" id="prev"></button>
+    <div class="count" id="count"></div>
+    <button class="btn ui" id="next"></button>
+  </footer>
+</div>
+<script>
+const L = {"n": 7, "minutes": 90, "icon": "📈", "title": ["Analytics and reporting", "التحليلات وكتابة التقارير"], "outcomes": [["Find your data in each platform", "تجدين بياناتك في كل منصة"], ["Tell vanity numbers from business numbers", "تفرّقين بين أرقام المظهر وأرقام العمل"], ["Write a one-page report a client understands", "تكتبين تقريراً من صفحة واحدة يفهمه العميل"]], "slides": [{"t": "concept", "icon": "🧭", "title": ["Numbers only matter if they lead to a decision", "الأرقام مهمة فقط إذا قادت إلى قرار"], "body": [["Data is like a car dashboard: you don’t stare at it, you glance at it to decide where to drive next.", "البيانات مثل لوحة عدادات السيارة: لا تحدّقين فيها، بل تنظرين إليها لتقرري إلى أين تتجهين."]]}, {"t": "grid", "title": ["Where your numbers live", "أين توجد أرقامك"], "items": [{"icon": "📸", "h": ["Instagram", "إنستغرام"], "d": ["Professional dashboard → Insights: reach, saves, shares, profile visits", "اللوحة الاحترافية ← الإحصاءات: الوصول، الحفظ، المشاركة، زيارات الحساب"]}, {"icon": "📣", "h": ["Meta Ads", "إعلانات ميتا"], "d": ["Ads Manager: spend, results, cost per result", "مدير الإعلانات: الإنفاق، النتائج، تكلفة النتيجة"]}, {"icon": "📍", "h": ["Google Business Profile", "ملف جوجل التجاري"], "d": ["Performance: calls, directions, searches", "الأداء: المكالمات، الاتجاهات، عمليات البحث"]}, {"icon": "🌐", "h": ["Website", "الموقع"], "d": ["Google Analytics (GA4): visitors, sources, button clicks", "Google Analytics: الزوار، المصادر، النقرات على الأزرار"]}]}, {"t": "compare", "title": ["Vanity vs business numbers", "أرقام المظهر مقابل أرقام العمل"], "intro": ["A client doesn’t care about 10,000 views if nobody ordered.", "العميل لا يهتم بـ 10,000 مشاهدة إذا لم يطلب أحد."], "bad": ["Vanity: likes, followers, views, impressions. Nice to know.", "أرقام المظهر: الإعجابات، المتابعون، المشاهدات، مرات الظهور. جيد معرفتها."], "good": ["Business: messages, orders, calls from Google, cost per customer. These pay the bills.", "أرقام العمل: الرسائل، الطلبات، المكالمات من جوجل، تكلفة العميل. هذه تدفع الفواتير."], "note": ["Saves, shares and profile visits sit in the middle: they show real interest.", "الحفظ والمشاركة وزيارات الحساب في المنتصف: تدل على اهتمام حقيقي."]}, {"t": "quiz", "q": ["Which number should lead your monthly report?", "أي رقم يجب أن يتصدر تقريرك الشهري؟"], "options": [["“We gained 220 followers”", "«حصلنا على 220 متابعاً»"], ["“31 WhatsApp enquiries and 18 orders from Instagram”", "«31 استفساراً عبر واتساب و18 طلباً من إنستغرام»"], ["“Our Reels got 40,000 views”", "«حصلت مقاطعنا على 40,000 مشاهدة»"]], "answer": 1, "why": ["Lead with the business result. Followers and views can come after, as supporting detail.", "ابدئي بنتيجة العمل. المتابعون والمشاهدات تأتي لاحقاً كتفاصيل داعمة."]}, {"t": "example", "title": ["Post autopsy: best vs worst", "تشريح المنشورات: الأفضل مقابل الأسوأ"], "lines": [["Dino cake reaction (Reel): reach 8,400, saves 120, shares 64", "ردة فعل كيكة الديناصور (ريل): وصول 8,400، حفظ 120، مشاركة 64"], ["Cake storage tips (carousel): reach 3,100, saves 210, shares 38", "نصائح حفظ الكيك (كاروسيل): وصول 3,100، حفظ 210، مشاركة 38"], ["Kunafa cake offer (image): reach 640, saves 4, shares 1", "عرض كيكة الكنافة (صورة): وصول 640، حفظ 4، مشاركة 1"]], "note": ["Lesson: reaction Reels get reach, tips get saves, flat offer images flop. Next month: show offers inside a Reel.", "الدرس: ريلز ردود الفعل تحقق وصولاً، والنصائح تُحفظ، وصور العروض العادية تفشل. الشهر القادم: اعرضي العروض داخل ريل."]}, {"t": "task", "minutes": 20, "title": ["Do your own autopsy", "شرّحي منشوراتك"], "body": ["Find your 3 best and 3 worst posts of the month. Compare format, hook, topic and posting time. What pattern do you see?", "اعثري على أفضل 3 وأسوأ 3 منشورات هذا الشهر. قارني الشكل والافتتاحية والموضوع ووقت النشر. ما النمط الذي تلاحظينه؟"]}, {"t": "flow", "title": ["The one-page report", "التقرير من صفحة واحدة"], "intro": ["Every report answers: what happened, why, and what’s next.", "كل تقرير يجيب: ماذا حدث، ولماذا، وما التالي."], "items": [{"icon": "🏆", "h": ["Headline", "النتيجة الرئيسية"], "s": ["31 WhatsApp enquiries and 18 orders this month", "31 استفساراً و18 طلباً هذا الشهر"]}, {"icon": "📋", "h": ["What happened", "ماذا حدث"], "s": ["AED 300 ad spend, about AED 10 per enquiry, followers 820 → 1,040", "إنفاق 300 درهم، حوالي 10 دراهم للاستفسار، المتابعون 820 ← 1,040"]}, {"icon": "🔍", "h": ["Why", "لماذا"], "s": ["Reaction Reels beat price ads by 4x", "ريلز ردود الفعل تفوقت على إعلانات السعر 4 مرات"]}, {"icon": "🗓️", "h": ["Next month", "الشهر القادم"], "s": ["2 reaction Reels a week, Eid gift box campaign", "ريلزان أسبوعياً، وحملة علب هدايا العيد"]}, {"icon": "🙋", "h": ["Need from you", "نحتاج منك"], "s": ["Reaction videos from 5 happy customers", "فيديوهات ردود فعل من 5 عملاء سعداء"]}]}, {"t": "task", "minutes": 30, "title": ["Write your report", "اكتبي تقريرك"], "body": ["Write your brand’s one-page report using the same 5 parts. Keep it short enough to read in 2 minutes.", "اكتبي تقرير مشروعك من صفحة واحدة بنفس الأجزاء الخمسة. اجعليه قصيراً يُقرأ في دقيقتين."]}, {"t": "prompt", "title": ["Turn data into a report", "حوّلي البيانات إلى تقرير"], "en": "Here is my monthly data: [paste numbers]. Write a one-page marketing report for a small business owner in simple language. Structure: headline result, what happened, why, next month’s plan, what I need from the client. Use only the numbers I gave you; if something is missing, say so instead of guessing.", "ar": "هذه بياناتي الشهرية: [الصقي الأرقام]. اكتب تقرير تسويق من صفحة واحدة لصاحب مشروع صغير بلغة بسيطة. البنية: النتيجة الرئيسية، ماذا حدث، لماذا، خطة الشهر القادم، ماذا أحتاج من العميل. استخدم الأرقام التي أعطيتك إياها فقط، وإذا نقص شيء فاذكر ذلك بدلاً من التخمين.", "note": ["Check every number AI writes. One wrong number destroys a client’s trust.", "راجعي كل رقم يكتبه الذكاء الاصطناعي. رقم خاطئ واحد يهدم ثقة العميل."]}], "homework": [["Pull 4 weeks of data from Instagram and your ads", "اجمعي بيانات 4 أسابيع من إنستغرام والإعلانات"], ["Find your top 3 and bottom 3 posts and explain the difference", "حدّدي أفضل 3 وأسوأ 3 منشورات واشرحي الفرق"], ["Write a one-page monthly report", "اكتبي تقريراً شهرياً من صفحة واحدة"], ["Write a next-month plan based on the data", "اكتبي خطة الشهر القادم بناءً على البيانات"]], "next": ["Final lesson: winning clients and presenting your work.", "الدرس الأخير: كسب العملاء وعرض أعمالك."]};
+const UI = {
+  next:['Next','التالي'], more:['More','المزيد'], back:['Back','السابق'], start:['Start lesson','ابدأ الدرس'],
+  turn:['Your turn','دورك الآن'], example:['Example: Sweet Crumbs Bakery','مثال: مخبز سويت كرامبز'],
+  quiz:['Quick check','اختبار سريع'], right:['Correct!','إجابة صحيحة!'], notquite:['Not quite','ليست الإجابة الصحيحة'],
+  bad:['Weak','ضعيف'], good:['Strong','قوي'], copy:['Copy English prompt','انسخ الأمر بالإنجليزية'],
+  copyar:['Copy Arabic prompt','انسخ الأمر بالعربية'], copied:['Copied','تم النسخ'], prompt:['Prompt to copy','أمر جاهز للنسخ'],
+  timer:['Start timer','ابدأ المؤقت'], pause:['Pause','إيقاف مؤقت'], reset:['Reset','إعادة'], timesup:['Time’s up!','انتهى الوقت!'],
+  hw:['Homework before next session','الواجب قبل الجلسة القادمة'], hwlead:['Tick each one when it’s done. Your ticks are saved on this device.','ضعي علامة عند إنجاز كل مهمة. تُحفظ العلامات على هذا الجهاز.'],
+  done:['Lesson complete','اكتمل الدرس'], again:['Start again','ابدأ من جديد'], gohw:['Open homework','افتح الواجب'],
+  outcomes:['By the end you can','في نهاية الدرس ستتمكنين من'], lesson:['Lesson','الدرس']
+};
+const esc = s => s;
+const bi = (B, tag='p', cls='') => `<div class="bi ${cls}"><${tag} class="en" lang="en">${B[0]}</${tag}><${tag} class="ar" lang="ar" dir="rtl">${B[1]}</${tag}></div>`;
+const ui = k => `<span class="en" lang="en">${UI[k][0]}</span><span class="ar" lang="ar">${UI[k][1]}</span>`;
+const kick = (k, i=0) => `<div class="kicker in" style="--i:${i}"><span class="dot"></span>${ui(k)}</div>`;
+const store = {
+  get(k){try{return localStorage.getItem(k)}catch(e){return null}},
+  set(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+};
+const KEY = 'dm-lesson-'+L.n;
+const slides = [{t:'cover'}, ...L.slides, {t:'homework'}, {t:'end'}];
+let mode = store.get('dm-mode') || 'both';
+let idx = Math.min(+store.get(KEY+'-slide')||0, slides.length-1), b = 0, tick = null;
+const $ = s => document.querySelector(s);
+const stage = $('#stage');
+
+function builds(s){
+  if(s.t==='steps'||s.t==='flow') return s.items.length-1;
+  if(s.t==='compare') return 1;
+  return 0;
+}
+
+function html(s){
+  switch(s.t){
+  case 'cover': return `
+    <div class="cover">
+      <div class="bignum in" style="--i:0">${L.n}</div>
+      <div class="in" style="--i:1">
+        <div class="kicker"><span class="dot"></span><span class="en">${UI.lesson[0]} ${L.n} of 8 · ${L.minutes} min</span><span class="ar" lang="ar" style="margin-inline-start:.5em">${UI.lesson[1]} ${L.n} من 8 · ${L.minutes} دقيقة</span></div>
+        <div class="bi"><h1 class="en">${L.title[0]}</h1><h1 class="ar" lang="ar">${L.title[1]}</h1></div>
+      </div>
+      <div class="outcomes">${L.outcomes.map((o,i)=>`<div class="oc in" style="--i:${i+2}"><div class="tick">✓</div>${bi(o,'p','stack')}</div>`).join('')}</div>
+      <button class="btn start in ui" style="--i:6" data-act="next">${ui('start')}</button>
+    </div>`;
+  case 'concept': return `
+    <div class="concept">
+      <div>
+        ${s.kicker?kick(s.kicker):''}
+        <div class="in" style="--i:1">${bi(s.title,'h2')}</div>
+        ${s.body.map((p,i)=>`<div class="in para" style="--i:${i+2}">${bi(p,'p','lead')}</div>`).join('')}
+      </div>
+      <div class="emoji in" style="--i:1" aria-hidden="true">${s.icon}</div>
+    </div>`;
+  case 'grid': return `
+    <div class="in" style="--i:0">${bi(s.title,'h2')}</div>
+    ${s.intro?`<div class="in" style="--i:1">${bi(s.intro,'p','lead')}</div>`:''}
+    <div class="grid stack">${s.items.map((c,i)=>`<div class="card in" style="--i:${i+2}">
+      ${c.icon?`<div class="ic" aria-hidden="true">${c.icon}</div>`:''}${bi(c.h,'p','h')}${c.d?bi(c.d,'p','d'):''}</div>`).join('')}</div>
+    ${s.note?`<div class="in note" style="--i:${s.items.length+2}">${bi(s.note,'p')}</div>`:''}`;
+  case 'compare': return `
+    <div class="in" style="--i:0">${bi(s.title,'h2')}</div>
+    ${s.intro?`<div class="in" style="--i:1">${bi(s.intro,'p','lead')}</div>`:''}
+    <div class="cmp stack">
+      <div class="side bad in" style="--i:2"><div class="tag">✕ ${ui('bad')}</div>${bi(s.bad,'p','txt')}</div>
+      <div class="side good" data-b="1"><div class="tag">✓ ${ui('good')}</div>${bi(s.good,'p','txt')}</div>
+    </div>
+    ${s.note?`<div class="note" data-b="1">${bi(s.note,'p')}</div>`:''}`;
+  case 'example': return `
+    ${kick('example')}
+    <div class="in" style="--i:1">${bi(s.title,'h2')}</div>
+    <div class="ex in" style="--i:2">${s.lines.map(l=>`<div class="row">${bi(l,'p')}</div>`).join('')}</div>
+    ${s.note?`<div class="in note" style="--i:3">${bi(s.note,'p')}</div>`:''}`;
+  case 'flow': return `
+    <div class="in" style="--i:0">${bi(s.title,'h2')}</div>
+    ${s.intro?`<div class="in" style="--i:1">${bi(s.intro,'p','lead')}</div>`:''}
+    <div class="flow stack in" style="--i:2">${s.items.map((n,i)=>`<div class="node" data-b="${i}">
+      <div class="pin">${n.icon||i+1}</div><div class="box">${bi(n.h,'p','h')}${n.d?bi(n.d,'p','d'):''}${n.s?`<div class="s">${bi(n.s,'p')}</div>`:''}</div></div>`).join('')}</div>`;
+  case 'steps': return `
+    <div class="in" style="--i:0">${bi(s.title,'h2')}</div>
+    ${s.intro?`<div class="in" style="--i:1">${bi(s.intro,'p','lead')}</div>`:''}
+    <ol class="steps">${s.items.map((t,i)=>`<li data-b="${i}"><span class="n">${i+1}</span>${bi(t,'p')}</li>`).join('')}</ol>`;
+  case 'quiz': return `
+    ${kick('quiz')}
+    <div class="in" style="--i:1">${bi(s.q,'h2')}</div>
+    <div class="opts">${s.options.map((o,i)=>`<button class="opt in" style="--i:${i+2}" data-opt="${i}">${bi(o,'p')}</button>`).join('')}</div>
+    <div class="why" id="why"><div class="tag" id="verdict"></div>${bi(s.why,'p')}</div>`;
+  case 'task': return `
+    ${kick('turn')}
+    <div class="in" style="--i:1">${bi(s.title,'h2')}</div>
+    <div class="task in" style="--i:2">
+      ${bi(s.body,'p','lead')}
+      ${s.items?`<ul>${s.items.map(t=>`<li>${bi(t,'p')}</li>`).join('')}</ul>`:''}
+      ${s.minutes?`<div class="timer"><div class="clock" id="clock">${fmt(s.minutes*60)}</div>
+        <button class="btn ui" id="tgo">${ui('timer')}</button><button class="btn alt ui" id="treset">${ui('reset')}</button></div>`:''}
+    </div>`;
+  case 'prompt': return `
+    ${kick('prompt')}
+    <div class="in" style="--i:1">${bi(s.title,'h2')}</div>
+    <div class="prompt in" style="--i:2">
+      ${bi([s.en, s.ar],'p')}
+      <div class="bar"><button class="btn ui en-btn" data-copy="en">${ui('copy')}</button><button class="btn ui ar-btn" data-copy="ar">${ui('copyar')}</button></div>
+    </div>
+    ${s.note?`<div class="in note" style="--i:3">${bi(s.note,'p')}</div>`:''}`;
+  case 'homework': {
+    const saved = JSON.parse(store.get(KEY+'-hw')||'[]');
+    return `
+    <div class="in" style="--i:0">${bi(UI.hw,'h2')}</div>
+    <div class="in" style="--i:1">${bi(UI.hwlead,'p','lead')}</div>
+    <ul class="hw">${L.homework.map((t,i)=>`<li class="in" style="--i:${i+2}"><label><input type="checkbox" data-hw="${i}" ${saved[i]?'checked':''}>${bi(t,'p')}</label></li>`).join('')}</ul>`;
+  }
+  case 'end': return `
+    <div class="end">
+      <div class="check" aria-hidden="true"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="54"/><path d="M36 62 L54 79 L86 44"/></svg></div>
+      <div class="in" style="--i:4">${bi(UI.done,'h2')}</div>
+      <div class="in" style="--i:5">${bi(L.next,'p','lead')}</div>
+      <div class="in" style="--i:6;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn alt ui" data-act="restart">${ui('again')}</button>
+        <button class="btn ui" data-act="hw">${ui('gohw')}</button>
+      </div>
+    </div>`;
+  }
+}
+
+function fmt(sec){const m=Math.floor(sec/60), s=sec%60; return `${m}:${String(s).padStart(2,'0')}`}
+
+function render(dir='fwd'){
+  clearInterval(tick); tick=null;
+  const s = slides[idx];
+  stage.innerHTML = `<section class="slide ${dir}">${html(s)}</section>`;
+  stage.scrollTop = 0;
+  store.set(KEY+'-slide', idx);
+  wire(s); applyBuild(); chrome();
+}
+
+function applyBuild(){
+  stage.querySelectorAll('[data-b]').forEach(el=>el.classList.toggle('shown', +el.dataset.b <= b));
+  const f = stage.querySelector('.flow');
+  if(f){const n = slides[idx].items.length; f.style.setProperty('--p', n>1 ? b/(n-1) : 1)}
+  const last = stage.querySelector(`[data-b="${b}"]`);
+  if(last && b>0) last.scrollIntoView({block:'nearest',behavior:'smooth'});
+  chrome();
+}
+
+function chrome(){
+  const s = slides[idx], more = b < builds(s);
+  const nx = $('#next');
+  nx.innerHTML = ui(more?'more':'next'); nx.classList.toggle('more', more);
+  nx.disabled = !more && idx===slides.length-1;
+  $('#prev').innerHTML = ui('back'); $('#prev').disabled = idx===0;
+  $('#count').textContent = `${idx+1} / ${slides.length}`;
+  $('#prog').innerHTML = slides.map((_,i)=>`<i class="${i<idx?'done':i===idx?'now':''}"></i>`).join('');
+}
+
+function next(){
+  const s = slides[idx];
+  if(b < builds(s)){b++; applyBuild(); return}
+  if(idx < slides.length-1){idx++; b=0; render('fwd')}
+}
+function prev(){
+  if(idx>0){idx--; b=builds(slides[idx]); render('back')}
+}
+
+function wire(s){
+  stage.querySelectorAll('[data-act]').forEach(el=>el.onclick=()=>{
+    const a = el.dataset.act;
+    if(a==='next') next();
+    if(a==='restart'){idx=0;b=0;render('back')}
+    if(a==='hw'){idx=slides.length-2;b=0;render('back')}
+  });
+  if(s.t==='quiz'){
+    stage.querySelectorAll('[data-opt]').forEach(el=>el.onclick=()=>{
+      const ok = +el.dataset.opt === s.answer;
+      stage.querySelectorAll('.opt').forEach(o=>o.classList.remove('wrong'));
+      el.classList.add(ok?'right':'wrong');
+      if(ok) stage.querySelectorAll('.opt').forEach(o=>o.disabled=true);
+      const w = $('#why'); w.classList.add('on');
+      $('#verdict').innerHTML = (ok?'✓ ':'✕ ') + ui(ok?'right':'notquite');
+      if(!ok) w.querySelector('.bi').style.display='none'; else w.querySelector('.bi').style.display='';
+      w.scrollIntoView({block:'nearest',behavior:'smooth'});
+    });
+  }
+  if(s.t==='task' && s.minutes){
+    let left = s.minutes*60;
+    const clock=$('#clock'), go=$('#tgo');
+    go.onclick=()=>{
+      if(tick){clearInterval(tick);tick=null;go.innerHTML=ui('timer');return}
+      go.innerHTML=ui('pause');
+      tick=setInterval(()=>{left--;clock.textContent=fmt(Math.max(left,0));
+        if(left<=0){clearInterval(tick);tick=null;clock.classList.add('done');clock.innerHTML=ui('timesup');go.innerHTML=ui('timer');left=s.minutes*60}},1000);
+    };
+    $('#treset').onclick=()=>{clearInterval(tick);tick=null;left=s.minutes*60;clock.classList.remove('done');clock.textContent=fmt(left);go.innerHTML=ui('timer')};
+  }
+  if(s.t==='prompt'){
+    stage.querySelectorAll('[data-copy]').forEach(el=>el.onclick=async()=>{
+      const txt = el.dataset.copy==='en'?s.en:s.ar;
+      try{await navigator.clipboard.writeText(txt)}catch(e){
+        const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();
+        try{document.execCommand('copy')}catch(_){}
+        ta.remove();
+      }
+      const old=el.innerHTML; el.innerHTML='✓ '+ui('copied'); setTimeout(()=>el.innerHTML=old,1600);
+    });
+  }
+  if(s.t==='homework'){
+    stage.querySelectorAll('[data-hw]').forEach(el=>el.onchange=()=>{
+      const arr=[...stage.querySelectorAll('[data-hw]')].map(x=>x.checked);
+      store.set(KEY+'-hw', JSON.stringify(arr));
+    });
+  }
+}
+
+function setMode(m){
+  mode=m; store.set('dm-mode',m);
+  document.body.className='mode-'+m;
+  document.documentElement.dir = m==='ar'?'rtl':'ltr';
+  document.documentElement.lang = m==='ar'?'ar':'en';
+  document.querySelectorAll('.lang button').forEach(x=>x.setAttribute('aria-pressed', x.dataset.m===m));
+}
+document.querySelectorAll('.lang button').forEach(x=>x.onclick=()=>setMode(x.dataset.m));
+$('#next').onclick=next; $('#prev').onclick=prev;
+document.addEventListener('keydown',e=>{
+  if(e.target.closest('input,textarea')) return;
+  const rtl = document.documentElement.dir==='rtl';
+  if(e.key==='ArrowRight') (rtl?prev:next)();
+  if(e.key==='ArrowLeft') (rtl?next:prev)();
+});
+let sx=null, sy=null;
+stage.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+stage.addEventListener('touchend',e=>{
+  if(sx===null) return;
+  const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy; sx=null;
+  if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5){
+    const rtl=document.documentElement.dir==='rtl';
+    ((dx<0)!==rtl ? next : prev)();
+  }
+},{passive:true});
+
+$('#lnum').textContent = `Lesson ${L.n} of 8`;
+$('#lnum').insertAdjacentHTML('afterend', `<span class="ar sep" lang="ar">الدرس ${L.n} من 8</span>`);
+$('#ten').textContent = L.title[0]; $('#tar').textContent = L.title[1];
+setMode(mode); render();
+</script>
+</body>
+</html>
